@@ -135,6 +135,19 @@
       statusEl.className = `status ${type}`;
     }
 
+    // Функції для роботи з UTF-8 та base64
+    function utf8_to_b64(str) {
+      return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+        return String.fromCharCode('0x' + p1);
+      }));
+    }
+
+    function b64_to_utf8(str) {
+      return decodeURIComponent(Array.prototype.map.call(atob(str), function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+    }
+
     // Безпечне отримання токена
     async function getGitHubToken() {
       if (githubToken) return githubToken;
@@ -209,7 +222,10 @@
           }
         } catch (e) {}
 
-        const content = btoa(JSON.stringify(currentData, null, 2));
+        // Використовуємо правильне кодування для кирилиці
+        const jsonString = JSON.stringify(currentData, null, 2);
+        const content = utf8_to_b64(jsonString);
+        
         const response = await fetch(url, {
           method: 'PUT',
           headers: {
