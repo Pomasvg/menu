@@ -4,12 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Шкільне меню</title>
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  
   <style>
-    /* Всі стилі залишаються без змін */
+    /* 👇 СВІТЛА ТЕМА (за замовчуванням) */
     :root {
       --bg: #f7fbff;
       --card: #ffffff;
@@ -18,12 +14,9 @@
       --text: #0f172a;
       --border: rgba(11,56,110,0.04);
       --shadow: rgba(12,18,40,0.06);
-      --reaction-bg: #f1f5f9;
-      --like-color: #22c55e;
-      --dislike-color: #ef4444;
-      --today-badge: #3b82f6;
     }
 
+    /* 👇 ТЕМНА ТЕМА */
     [data-theme="dark"] {
       --bg: #0f172a;
       --card: #1e293b;
@@ -32,10 +25,6 @@
       --text: #f1f5f9;
       --border: rgba(148,163,184,0.1);
       --shadow: rgba(0,0,0,0.3);
-      --reaction-bg: #334155;
-      --like-color: #4ade80;
-      --dislike-color: #f87171;
-      --today-badge: #60a5fa;
     }
 
     *{box-sizing:border-box}
@@ -52,7 +41,7 @@
     .card{background:var(--card);border-radius:10px;padding:16px;box-shadow:0 6px 18px var(--shadow);transition:background 0.3s, box-shadow 0.3s}
     .section-title{font-weight:700;margin-top:14px;margin-bottom:8px;color:var(--text)}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-    .meal{padding:12px;border-radius:8px;background:var(--card);border:1px solid var(--border);position:relative;transition:all 0.3s}
+    .meal{padding:12px;border-radius:8px;background:var(--card);border:1px solid var(--border);transition:all 0.3s}
     .meal h4{margin:0 0 6px 0;font-size:15px;color:var(--text)}
     .muted{color:var(--muted);font-size:13px}
     .form-row{margin-top:8px}
@@ -61,9 +50,10 @@
     .success{background:#d4edda;color:#155724}
     .loading{background:#fff3cd;color:#856404}
     .error{background:#f8d7da;color:#721c24}
-    .access-panel{background:var(--reaction-bg);padding:15px;border-radius:8px;margin-top:15px;border:1px dashed var(--border)}
+    .access-panel{background:var(--bg);padding:15px;border-radius:8px;margin-top:15px;border:1px dashed var(--border)}
     .user-badge{background:#e7f3ff;padding:4px 8px;border-radius:4px;font-size:12px;margin-left:8px}
 
+    /* 👇 КНОПКА ТЕМИ */
     .theme-toggle {
       background: transparent;
       border: 1px solid var(--border);
@@ -76,67 +66,6 @@
     }
     .theme-toggle:hover {
       transform: scale(1.05);
-    }
-
-    .reactions {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-      align-items: center;
-    }
-    
-    .reaction-btn {
-      background: var(--reaction-bg);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 4px 12px;
-      font-size: 14px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      transition: all 0.2s;
-      color: var(--text);
-    }
-    
-    .reaction-btn:hover {
-      transform: scale(1.05);
-    }
-    
-    .reaction-btn.active {
-      font-weight: bold;
-    }
-    
-    .reaction-btn.like.active {
-      background: var(--like-color);
-      color: white;
-      border-color: var(--like-color);
-    }
-    
-    .reaction-btn.dislike.active {
-      background: var(--dislike-color);
-      color: white;
-      border-color: var(--dislike-color);
-    }
-    
-    .reaction-count {
-      font-size: 12px;
-      color: var(--muted);
-      margin-left: 4px;
-      font-weight: bold;
-    }
-    
-    .today-badge {
-      position: absolute;
-      top: -8px;
-      right: 10px;
-      background: var(--today-badge);
-      color: white;
-      font-size: 10px;
-      padding: 2px 6px;
-      border-radius: 10px;
-      font-weight: bold;
-      z-index: 1;
     }
 
     .meal-content {
@@ -193,7 +122,7 @@
           </div>
         </div>
 
-        <div id="editor" style="display:none;margin-top:20px;padding:20px;background:var(--reaction-bg);border-radius:8px;">
+        <div id="editor" style="display:none;margin-top:20px;padding:20px;background:var(--bg);border-radius:8px;">
           <h3>✏️ Редагувати меню на <span id="editDateLabel"></span></h3>
           
           <div class="muted" style="margin-bottom:15px;">
@@ -220,29 +149,6 @@
   </div>
 
   <script>
-    // 👇 КОНФІГУРАЦІЯ FIREBASE - ЗАМІНІТЬ ЦІ ДАНІ НА СВОЇ!
-    const FIREBASE_CONFIG = {
-      apiKey: "ВАШ_API_KEY",
-      authDomain: "ВАШ_PROJECT.firebaseapp.com",
-      databaseURL: "https://ВАШ_PROJECT.firebaseio.com",
-      projectId: "ВАШ_PROJECT_ID",
-      storageBucket: "ВАШ_PROJECT.appspot.com",
-      messagingSenderId: "ВАШ_SENDER_ID",
-      appId: "ВАШ_APP_ID"
-    };
-
-    // 👇 ІНІЦІАЛІЗАЦІЯ FIREBASE
-    let database;
-    try {
-      if (firebase.apps.length === 0) {
-        firebase.initializeApp(FIREBASE_CONFIG);
-      }
-      database = firebase.database();
-      console.log('✅ Firebase ініціалізовано успішно');
-    } catch (error) {
-      console.error('❌ Помилка ініціалізації Firebase:', error);
-    }
-
     const ADMIN_PASSWORD = "school123123";
     const GITHUB_CONFIG = {
       repoOwner: "Pomasvg",       
@@ -252,20 +158,6 @@
     let currentData = {};
     let isAdmin = false;
     let githubToken = "";
-    
-    // 👇 ГЛОБАЛЬНІ РЕАКЦІЇ (зберігаються в Firebase)
-    let reactionsCache = {};
-    let userReactionsCache = {};
-
-    // Функція для отримання ID користувача
-    function getUserId() {
-      let userId = localStorage.getItem('global_user_id');
-      if (!userId) {
-        userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('global_user_id', userId);
-      }
-      return userId;
-    }
 
     const dateInput = document.getElementById('date');
     const readableDate = document.getElementById('readableDate');
@@ -276,13 +168,8 @@
     const accessPanel = document.getElementById('accessPanel');
     const userBadge = document.getElementById('userBadge');
 
-    function isoToday() { 
-      return new Date().toISOString().slice(0,10); 
-    }
-    
-    function niceDate(iso) { 
-      return new Date(iso).toLocaleDateString('uk-UA',{year:'numeric',month:'long',day:'numeric'}); 
-    }
+    function isoToday() { return new Date().toISOString().slice(0,10); }
+    function niceDate(iso) { return new Date(iso).toLocaleDateString('uk-UA',{year:'numeric',month:'long',day:'numeric'}); }
 
     function setStatus(text, type = '') {
       statusEl.textContent = text;
@@ -312,188 +199,6 @@
 
     document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
-    // 👇 ФУНКЦІЇ ДЛЯ РЕАКЦІЙ (Firebase)
-    async function saveReaction(mealType, reaction) {
-      const today = isoToday();
-      const userId = getUserId();
-      
-      if (dateInput.value !== today) {
-        alert('⚠️ Реакції можна ставити тільки на сьогоднішнє меню!');
-        return false;
-      }
-      
-      if (!database) {
-        alert('❌ Firebase не ініціалізовано!');
-        return false;
-      }
-      
-      try {
-        // Видаляємо стару реакцію
-        await database.ref(`reactions/${today}/${mealType}/likes/${userId}`).remove();
-        await database.ref(`reactions/${today}/${mealType}/dislikes/${userId}`).remove();
-        
-        // Додаємо нову реакцію
-        if (reaction === 'like') {
-          await database.ref(`reactions/${today}/${mealType}/likes/${userId}`).set({
-            timestamp: Date.now(),
-            user: userId
-          });
-        } else if (reaction === 'dislike') {
-          await database.ref(`reactions/${today}/${mealType}/dislikes/${userId}`).set({
-            timestamp: Date.now(),
-            user: userId
-          });
-        }
-        
-        // Очищаємо кеш для оновлення
-        delete reactionsCache[today];
-        delete userReactionsCache[`${today}_${mealType}`];
-        
-        return true;
-      } catch (error) {
-        console.error('Помилка збереження реакції:', error);
-        alert('Помилка збереження реакції. Перевірте підключення до інтернету.');
-        return false;
-      }
-    }
-
-    // Завантаження кількості реакцій
-    async function getReactionCounts(mealType) {
-      const today = isoToday();
-      
-      // Перевіряємо кеш
-      if (reactionsCache[today] && reactionsCache[today][mealType]) {
-        return reactionsCache[today][mealType];
-      }
-      
-      if (!database) {
-        console.warn('Firebase не ініціалізовано, повертаються нульові значення');
-        return { likes: 0, dislikes: 0 };
-      }
-      
-      try {
-        const snapshot = await database.ref(`reactions/${today}/${mealType}`).once('value');
-        const data = snapshot.val();
-        
-        const counts = {
-          likes: data?.likes ? Object.keys(data.likes).length : 0,
-          dislikes: data?.dislikes ? Object.keys(data.dislikes).length : 0
-        };
-        
-        // Зберігаємо в кеш
-        if (!reactionsCache[today]) reactionsCache[today] = {};
-        reactionsCache[today][mealType] = counts;
-        
-        return counts;
-      } catch (error) {
-        console.error('Помилка отримання реакцій:', error);
-        return { likes: 0, dislikes: 0 };
-      }
-    }
-
-    // Отримання реакції користувача
-    async function getUserReaction(mealType) {
-      const today = isoToday();
-      const userId = getUserId();
-      const cacheKey = `${today}_${mealType}`;
-      
-      // Перевіряємо кеш
-      if (userReactionsCache[cacheKey] !== undefined) {
-        return userReactionsCache[cacheKey];
-      }
-      
-      if (!database) {
-        return null;
-      }
-      
-      try {
-        const likeSnapshot = await database.ref(`reactions/${today}/${mealType}/likes/${userId}`).once('value');
-        const dislikeSnapshot = await database.ref(`reactions/${today}/${mealType}/dislikes/${userId}`).once('value');
-        
-        let result = null;
-        if (likeSnapshot.exists()) result = 'like';
-        if (dislikeSnapshot.exists()) result = 'dislike';
-        
-        // Зберігаємо в кеш
-        userReactionsCache[cacheKey] = result;
-        return result;
-      } catch (error) {
-        console.error('Помилка отримання реакції користувача:', error);
-        return null;
-      }
-    }
-
-    // Обробник реакцій
-    async function handleReaction(mealType, reaction) {
-      if (dateInput.value !== isoToday()) {
-        alert('⚠️ Реакції можна ставити тільки на сьогоднішнє меню!');
-        return;
-      }
-      
-      const success = await saveReaction(mealType, reaction);
-      if (success) {
-        // Оновлюємо кеш
-        userReactionsCache[`${isoToday()}_${mealType}`] = reaction;
-        
-        // Оновлюємо лише цю реакцію без перезавантаження всієї сторінки
-        await updateReactionDisplay(mealType);
-      }
-    }
-
-    // Оновлення відображення конкретної реакції
-    async function updateReactionDisplay(mealType) {
-      const today = isoToday();
-      const counts = await getReactionCounts(mealType);
-      const userReaction = await getUserReaction(mealType);
-      
-      // Знаходимо всі кнопки з цим mealType
-      const reactionButtons = document.querySelectorAll(`[data-meal-type="${mealType}"]`);
-      
-      reactionButtons.forEach(button => {
-        if (button.classList.contains('like')) {
-          const countSpan = button.querySelector('.reaction-count');
-          if (countSpan) countSpan.textContent = counts.likes;
-          button.classList.toggle('active', userReaction === 'like');
-        } else if (button.classList.contains('dislike')) {
-          const countSpan = button.querySelector('.reaction-count');
-          if (countSpan) countSpan.textContent = counts.dislikes;
-          button.classList.toggle('active', userReaction === 'dislike');
-        }
-      });
-    }
-
-    // Створення елемента реакцій
-    async function createReactionsElement(mealType) {
-      // Отримуємо дані одночасно
-      const [counts, userReaction] = await Promise.all([
-        getReactionCounts(mealType),
-        getUserReaction(mealType)
-      ]);
-      
-      const reactionsDiv = document.createElement('div');
-      reactionsDiv.className = 'reactions';
-      
-      const likeBtn = document.createElement('button');
-      likeBtn.className = `reaction-btn like ${userReaction === 'like' ? 'active' : ''}`;
-      likeBtn.innerHTML = `👍 <span class="reaction-count">${counts.likes}</span>`;
-      likeBtn.title = "Сподобалося";
-      likeBtn.setAttribute('data-meal-type', mealType);
-      likeBtn.onclick = () => handleReaction(mealType, 'like');
-      
-      const dislikeBtn = document.createElement('button');
-      dislikeBtn.className = `reaction-btn dislike ${userReaction === 'dislike' ? 'active' : ''}`;
-      dislikeBtn.innerHTML = `👎 <span class="reaction-count">${counts.dislikes}</span>`;
-      dislikeBtn.title = "Не сподобалося";
-      dislikeBtn.setAttribute('data-meal-type', mealType);
-      dislikeBtn.onclick = () => handleReaction(mealType, 'dislike');
-      
-      reactionsDiv.appendChild(likeBtn);
-      reactionsDiv.appendChild(dislikeBtn);
-      
-      return reactionsDiv;
-    }
-
-    // Інші функції (залишаються без змін)
     function utf8_to_b64(str) {
       return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
         return String.fromCharCode('0x' + p1);
@@ -659,7 +364,43 @@
       }
     }
 
-    // Прив'язка подій (залишається без змін)
+    // 👇 ФУНКЦІЯ ВІДОБРАЖЕННЯ МЕНЮ (без "СЬОГОДНІ")
+    function renderForDate(iso) {
+      if (!iso) iso = dateInput.value || isoToday();
+      readableDate.textContent = niceDate(iso);
+      const day = currentData[iso] || { city: { lunch: '' }, nonCity: { breakfast:'', snack:'', lunch:'', evening:'', dinner:'' } };
+
+      cityArea.innerHTML = '';
+      const cityLunchCard = document.createElement('div');
+      cityLunchCard.className = 'meal';
+      
+      const cityContent = document.createElement('div');
+      cityContent.innerHTML = `<h4>🍽️ Обід</h4><div class="meal-content">${day.city.lunch || '—'}</div>`;
+      cityLunchCard.appendChild(cityContent);
+      
+      cityArea.appendChild(cityLunchCard);
+
+      nonCityArea.innerHTML = '';
+      const fields = [
+        ['🍳 Сніданок', 'nc_breakfast', day.nonCity.breakfast],
+        ['🍎 Полуденок', 'nc_snack', day.nonCity.snack],
+        ['🍲 Обід', 'nc_lunch', day.nonCity.lunch],
+        ['🥛 Підвечірок', 'nc_evening', day.nonCity.evening],
+        ['🍛 Вечеря', 'nc_dinner', day.nonCity.dinner]
+      ];
+      
+      fields.forEach(([title, mealType, val]) => {
+        const div = document.createElement('div');
+        div.className = 'meal';
+        
+        const content = document.createElement('div');
+        content.innerHTML = `<h4>${title}</h4><div class="meal-content">${val || '—'}</div>`;
+        div.appendChild(content);
+        
+        nonCityArea.appendChild(div);
+      });
+    }
+
     document.getElementById('today').addEventListener('click', () => {
       dateInput.value = isoToday();
       renderForDate(dateInput.value);
@@ -751,99 +492,12 @@
       }
     });
 
-    // 👇 ФУНКЦІЯ ВІДОБРАЖЕННЯ МЕНЮ
-    async function renderForDate(iso) {
-      if (!iso) iso = dateInput.value || isoToday();
-      readableDate.textContent = niceDate(iso);
-      const day = currentData[iso] || { city: { lunch: '' }, nonCity: { breakfast:'', snack:'', lunch:'', evening:'', dinner:'' } };
-      const isToday = iso === isoToday();
-
-      // Очищаємо вміст
-      cityArea.innerHTML = '';
-      nonCityArea.innerHTML = '';
-
-      // Створюємо картку для міських дітей
-      const cityLunchCard = document.createElement('div');
-      cityLunchCard.className = 'meal';
-      
-      if (isToday) {
-        const todayBadge = document.createElement('span');
-        todayBadge.className = 'today-badge';
-        todayBadge.textContent = 'СЬОГОДНІ';
-        cityLunchCard.appendChild(todayBadge);
-      }
-      
-      const cityContent = document.createElement('div');
-      cityContent.innerHTML = `<h4>🍽️ Обід</h4><div class="meal-content">${day.city.lunch || '—'}</div>`;
-      cityLunchCard.appendChild(cityContent);
-      
-      if (isToday) {
-        const reactions = await createReactionsElement('city_lunch');
-        cityLunchCard.appendChild(reactions);
-      }
-      
-      cityArea.appendChild(cityLunchCard);
-
-      // Створюємо картки для іншомістних дітей
-      const fields = [
-        ['🍳 Сніданок', 'nc_breakfast', day.nonCity.breakfast],
-        ['🍎 Полуденок', 'nc_snack', day.nonCity.snack],
-        ['🍲 Обід', 'nc_lunch', day.nonCity.lunch],
-        ['🥛 Підвечірок', 'nc_evening', day.nonCity.evening],
-        ['🍛 Вечеря', 'nc_dinner', day.nonCity.dinner]
-      ];
-      
-      for (const [title, mealType, val] of fields) {
-        const div = document.createElement('div');
-        div.className = 'meal';
-        
-        if (isToday) {
-          const todayBadge = document.createElement('span');
-          todayBadge.className = 'today-badge';
-          todayBadge.textContent = 'СЬОГОДНІ';
-          div.appendChild(todayBadge);
-        }
-        
-        const content = document.createElement('div');
-        content.innerHTML = `<h4>${title}</h4><div class="meal-content">${val || '—'}</div>`;
-        div.appendChild(content);
-        
-        if (isToday) {
-          const reactions = await createReactionsElement(mealType);
-          div.appendChild(reactions);
-        }
-        
-        nonCityArea.appendChild(div);
-      }
-    }
-
-    // 👇 АВТОМАТИЧНЕ ОНОВЛЕННЯ РЕАКЦІЙ
-    setInterval(async () => {
-      const currentDate = dateInput.value;
-      if (currentDate === isoToday()) {
-        // Оновлюємо всі реакції для сьогоднішнього меню
-        const today = isoToday();
-        const mealTypes = ['city_lunch', 'nc_breakfast', 'nc_snack', 'nc_lunch', 'nc_evening', 'nc_dinner'];
-        
-        for (const mealType of mealTypes) {
-          await updateReactionDisplay(mealType);
-        }
-      }
-    }, 10000);
-
     // 👇 ІНІЦІАЛІЗАЦІЯ
     (async function init() {
       initTheme();
       dateInput.value = isoToday();
       await loadData();
-      await renderForDate(dateInput.value);
-      
-      // Додаємо повідомлення про статус Firebase
-      if (database) {
-        console.log('✅ Firebase готовий до використання');
-      } else {
-        console.warn('⚠️ Firebase не ініціалізовано. Реакції працюватимуть локально.');
-      }
+      renderForDate(dateInput.value);
     })();
   </script>
 </body>
