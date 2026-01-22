@@ -770,6 +770,97 @@
       await Promise.all([loadData(), loadReactions()]);
       renderForDate(dateInput.value);
     })();
+    // Додайте цей код після ініціалізації GITHUB_CONFIG
+const FIREBASE_CONFIG = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+// Ініціалізація Firebase
+let firebaseApp, database;
+try {
+  firebaseApp = firebase.initializeApp(FIREBASE_CONFIG);
+  database = firebase.database();
+} catch (error) {
+  console.log('Firebase вже ініціалізовано або помилка:', error);
+}
+
+// Змініть функції для роботи з Firebase
+async function saveReaction(mealType, reaction) {
+  const today = isoToday();
+  const userId = getUserId();
+  
+  try {
+    // Видаляємо стару реакцію
+    await database.ref(`reactions/${today}/${mealType}/likes/${userId}`).remove();
+    await database.ref(`reactions/${today}/${mealType}/dislikes/${userId}`).remove();
+    
+    // Додаємо нову реакцію
+    if (reaction === 'like') {
+      await database.ref(`reactions/${today}/${mealType}/likes/${userId}`).set({
+        timestamp: Date.now()
+      });
+    } else if (reaction === 'dislike') {
+      await database.ref(`reactions/${today}/${mealType}/dislikes/${userId}`).set({
+        timestamp: Date.now()
+      });
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Помилка збереження реакції:', error);
+    return false;
+  }
+}
+
+async function getReactionCounts(mealType) {
+  const today = isoToday();
+  
+  try {
+    const snapshot = await database.ref(`reactions/${today}/${mealType}`).once('value');
+    const data = snapshot.val();
+    
+    return {
+      likes: data?.likes ? Object.keys(data.likes).length : 0,
+      dislikes: data?.dislikes ? Object.keys(data.dislikes).length : 0
+    };
+  } catch (error) {
+    console.error('Помилка отримання реакцій:', error);
+    return { likes: 0, dislikes: 0 };
+  }
+}
+
+async function getUserReaction(mealType) {
+  const today = isoToday();
+  const userId = getUserId();
+  
+  try {
+    const likeSnapshot = await database.ref(`reactions/${today}/${mealType}/likes/${userId}`).once('value');
+    const dislikeSnapshot = await database.ref(`reactions/${today}/${mealType}/dislikes/${userId}`).once('value');
+    
+    if (likeSnapshot.exists()) return 'like';
+    if (dislikeSnapshot.exists()) return 'dislike';
+    return null;
+  } catch (error) {
+    console.error('Помилка отримання реакції користувача:', error);
+    return null;
+  }
+}
+
+// Функція для генерації унікального ID користувача
+function getUserId() {
+  let userId = localStorage.getItem('global_user_id');
+  if (!userId) {
+    userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('global_user_id', userId);
+  }
+  return userId;
+}
   </script>
 </body>
 </html>
