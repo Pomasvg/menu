@@ -68,9 +68,20 @@
       transform: scale(1.05);
     }
 
+    /* 👇 СТРАВИ АБЗАЦАМИ */
     .meal-content {
       white-space: pre-line;
-      line-height: 1.5;
+      line-height: 1.6;
+    }
+    
+    /* Додаємо крапки або дефіси для кожного пункту */
+    .meal-content ul, .meal-content ol {
+      margin: 0;
+      padding-left: 20px;
+    }
+    
+    .meal-content li {
+      margin: 3px 0;
     }
 
     @media(max-width:520px){
@@ -126,18 +137,37 @@
           <h3>✏️ Редагувати меню на <span id="editDateLabel"></span></h3>
           
           <div class="muted" style="margin-bottom:15px;">
-            💡 Зміни будуть збережені для всіх відвідувачів сайту
+            💡 Кожну страву пишіть з нового рядка
           </div>
           
           <div class="section-title">🍽️ Міські діти</div>
-          <div class="form-row"><label>🍲 Обід</label><textarea id="e_city_lunch" rows="3" placeholder="Наприклад: Борщ, котлета, пюре, компот"></textarea></div>
+          <div class="form-row"><label>🍲 Обід</label><textarea id="e_city_lunch" rows="5" placeholder="Напишіть кожну страву з нового рядка:
+Борщ
+Котлета
+Пюре
+Компот"></textarea></div>
 
           <div class="section-title">🏠 Іногородні діти</div>
-          <div class="form-row"><label>🍳 Сніданок</label><textarea id="e_nc_breakfast" rows="2" placeholder="Наприклад: Каша гречана, бутерброд, чай"></textarea></div>
-          <div class="form-row"><label>🍎 Полуденок</label><textarea id="e_nc_snack" rows="2" placeholder="Наприклад: Яблуко, печиво, сік"></textarea></div>
-          <div class="form-row"><label>🍲 Обід</label><textarea id="e_nc_lunch" rows="3" placeholder="Наприклад: Борщ, котлета, пюре, салат"></textarea></div>
-          <div class="form-row"><label>🥛 Підвечірок</label><textarea id="e_nc_evening" rows="2" placeholder="Наприклад: Йогурт, фрукт"></textarea></div>
-          <div class="form-row"><label>🍛 Вечеря</label><textarea id="e_nc_dinner" rows="2" placeholder="Наприклад: Омлет, салат, кефір"></textarea></div>
+          <div class="form-row"><label>🍳 Сніданок</label><textarea id="e_nc_breakfast" rows="4" placeholder="Наприклад:
+Каша гречана
+Бутерброд
+Чай"></textarea></div>
+          <div class="form-row"><label>🍎 Полуденок</label><textarea id="e_nc_snack" rows="3" placeholder="Наприклад:
+Яблуко
+Печиво
+Сік"></textarea></div>
+          <div class="form-row"><label>🍲 Обід</label><textarea id="e_nc_lunch" rows="5" placeholder="Наприклад:
+Борщ
+Котлета
+Пюре
+Салат"></textarea></div>
+          <div class="form-row"><label>🥛 Підвечірок</label><textarea id="e_nc_evening" rows="3" placeholder="Наприклад:
+Йогурт
+Фрукт"></textarea></div>
+          <div class="form-row"><label>🍛 Вечеря</label><textarea id="e_nc_dinner" rows="4" placeholder="Наприклад:
+Омлет
+Салат
+Кефір"></textarea></div>
 
           <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
             <button id="save">💾 Зберегти для всіх</button>
@@ -198,6 +228,27 @@
     }
 
     document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+    // 👇 ФОРМАТУВАННЯ ТЕКСТУ АБЗАЦАМИ
+    function formatMealText(text) {
+      if (!text) return '—';
+      
+      const lines = text.split('\n').filter(line => line.trim() !== '');
+      
+      if (lines.length > 1) {
+        const listItems = lines.map(line => {
+          const trimmed = line.trim();
+          if (trimmed && !trimmed.startsWith('•') && !trimmed.startsWith('-') && !trimmed.startsWith('*')) {
+            return `• ${trimmed}`;
+          }
+          return trimmed;
+        }).join('\n');
+        
+        return listItems;
+      }
+      
+      return text;
+    }
 
     function utf8_to_b64(str) {
       return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
@@ -364,7 +415,7 @@
       }
     }
 
-    // 👇 ФУНКЦІЯ ВІДОБРАЖЕННЯ МЕНЮ (без "СЬОГОДНІ")
+    // 👇 ФУНКЦІЯ ВІДОБРАЖЕННЯ МЕНЮ (без реакцій)
     function renderForDate(iso) {
       if (!iso) iso = dateInput.value || isoToday();
       readableDate.textContent = niceDate(iso);
@@ -375,7 +426,7 @@
       cityLunchCard.className = 'meal';
       
       const cityContent = document.createElement('div');
-      cityContent.innerHTML = `<h4>🍽️ Обід</h4><div class="meal-content">${day.city.lunch || '—'}</div>`;
+      cityContent.innerHTML = `<h4>🍽️ Обід</h4><div class="meal-content">${formatMealText(day.city.lunch) || '—'}</div>`;
       cityLunchCard.appendChild(cityContent);
       
       cityArea.appendChild(cityLunchCard);
@@ -394,7 +445,7 @@
         div.className = 'meal';
         
         const content = document.createElement('div');
-        content.innerHTML = `<h4>${title}</h4><div class="meal-content">${val || '—'}</div>`;
+        content.innerHTML = `<h4>${title}</h4><div class="meal-content">${formatMealText(val) || '—'}</div>`;
         div.appendChild(content);
         
         nonCityArea.appendChild(div);
