@@ -17,6 +17,7 @@
       --reaction-bg: #f1f5f9;
       --like-color: #22c55e;
       --dislike-color: #ef4444;
+      --today-badge: #3b82f6;
     }
 
     /* 👇 ТЕМНА ТЕМА */
@@ -31,23 +32,25 @@
       --reaction-bg: #334155;
       --like-color: #4ade80;
       --dislike-color: #f87171;
+      --today-badge: #60a5fa;
     }
 
     *{box-sizing:border-box}
-    body{font-family:Inter,Segoe UI,Arial; background:var(--bg); margin:0; padding:24px; color:var(--text)}
+    body{font-family:Inter,Segoe UI,Arial; background:var(--bg); margin:0; padding:24px; color:var(--text); transition:background 0.3s, color 0.3s}
     .wrap{max-width:980px;margin:0 auto}
     header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:12px}
     h1{font-size:20px;margin:0}
-    .controls{display:flex;gap:8px;align-items:center}
-    button{background:var(--accent);color:white;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
+    .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    button{background:var(--accent);color:white;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;transition:opacity 0.2s}
+    button:hover{opacity:0.9}
     button.ghost{background:transparent;color:var(--accent);border:1px solid rgba(0,102,204,0.12)}
     button:disabled{opacity:0.6;cursor:not-allowed}
     .date-display{font-weight:700}
-    .card{background:var(--card);border-radius:10px;padding:16px;box-shadow:0 6px 18px var(--shadow)}
-    .section-title{font-weight:700;margin-top:14px;margin-bottom:8px}
+    .card{background:var(--card);border-radius:10px;padding:16px;box-shadow:0 6px 18px var(--shadow);transition:background 0.3s, box-shadow 0.3s}
+    .section-title{font-weight:700;margin-top:14px;margin-bottom:8px;color:var(--text)}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-    .meal{padding:12px;border-radius:8px;background:var(--card);border:1px solid var(--border);position:relative}
-    .meal h4{margin:0 0 6px 0;font-size:15px}
+    .meal{padding:12px;border-radius:8px;background:var(--card);border:1px solid var(--border);position:relative;transition:all 0.3s}
+    .meal h4{margin:0 0 6px 0;font-size:15px;color:var(--text)}
     .muted{color:var(--muted);font-size:13px}
     .form-row{margin-top:8px}
     textarea,input[type="text"]{width:100%;padding:8px;border-radius:6px;border:1px solid var(--border);font-size:14px;background:var(--card);color:var(--text)}
@@ -67,6 +70,10 @@
       border-radius: 8px;
       cursor: pointer;
       font-size: 20px;
+      transition: all 0.3s;
+    }
+    .theme-toggle:hover {
+      transform: scale(1.05);
     }
 
     /* 👇 РЕАКЦІЇ */
@@ -115,22 +122,30 @@
       font-size: 12px;
       color: var(--muted);
       margin-left: 4px;
+      font-weight: bold;
     }
     
     .today-badge {
       position: absolute;
       top: -8px;
       right: 10px;
-      background: var(--accent);
+      background: var(--today-badge);
       color: white;
       font-size: 10px;
       padding: 2px 6px;
       border-radius: 10px;
+      font-weight: bold;
+      z-index: 1;
+    }
+
+    .meal-content {
+      white-space: pre-line;
+      line-height: 1.5;
     }
 
     @media(max-width:520px){
       header{flex-direction:column;align-items:flex-start}
-      .controls{flex-wrap:wrap}
+      .controls{justify-content:flex-start}
     }
   </style>
 </head>
@@ -210,22 +225,22 @@
       repoName: "menu"
     };
 
-    // 👇 ДОДАНО РЕАКЦІЇ В КОНФІГ
-    const REACTIONS_CONFIG = {
-      repoOwner: "Pomasvg",
-      repoName: "menu-reactions" // окремий файл для реакцій
-    };
-
     let currentData = {};
-    let reactionsData = {};
     let isAdmin = false;
     let githubToken = "";
+    
+    // 👇 РЕАКЦІЇ (без GitHub - зберігаємо локально)
+    let reactionsData = JSON.parse(localStorage.getItem('menu_reactions') || '{}');
     let userId = localStorage.getItem('user_id') || generateUserId();
 
     function generateUserId() {
-      const id = 'user_' + Math.random().toString(36).substr(2, 9);
+      const id = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
       localStorage.setItem('user_id', id);
       return id;
+    }
+
+    function saveReactionsToStorage() {
+      localStorage.setItem('menu_reactions', JSON.stringify(reactionsData));
     }
 
     const dateInput = document.getElementById('date');
@@ -263,31 +278,13 @@
     function updateThemeButton(theme) {
       const button = document.getElementById('themeToggle');
       button.textContent = theme === 'dark' ? '☀️' : '🌙';
+      button.title = theme === 'dark' ? 'Перемкнути на світлу тему' : 'Перемкнути на темну тему';
     }
 
     document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
-    // 👇 ФУНКЦІЇ ДЛЯ РЕАКЦІЙ
-    async function loadReactions() {
-      try {
-        const url = `https://raw.githubusercontent.com/${REACTIONS_CONFIG.repoOwner}/${REACTIONS_CONFIG.repoName}/main/reactions.json`;
-        const response = await fetch(url + '?t=' + Date.now());
-        
-        if (response.ok) {
-          reactionsData = await response.json();
-          return true;
-        } else {
-          reactionsData = {};
-          return true;
-        }
-      } catch (error) {
-        console.error('Помилка завантаження реакцій:', error);
-        reactionsData = {};
-        return false;
-      }
-    }
-
-    async function saveReaction(mealType, reaction) {
+    // 👇 ФУНКЦІЇ ДЛЯ РЕАКЦІЙ (спрощені)
+    function saveReaction(mealType, reaction) {
       const today = isoToday();
       if (!reactionsData[today]) {
         reactionsData[today] = {};
@@ -309,41 +306,9 @@
         mealReactions.dislikes.push(userId);
       }
       
-      // Зберігаємо в GitHub
-      return await saveReactionsToGitHub();
-    }
-
-    async function saveReactionsToGitHub() {
-      try {
-        const url = `https://api.github.com/repos/${REACTIONS_CONFIG.repoOwner}/${REACTIONS_CONFIG.repoName}/contents/reactions.json`;
-        
-        let sha = '';
-        try {
-          const getResponse = await fetch(url);
-          if (getResponse.ok) {
-            const fileData = await getResponse.json();
-            sha = fileData.sha;
-          }
-        } catch (e) {}
-        
-        const content = btoa(JSON.stringify(reactionsData, null, 2));
-        const response = await fetch(url, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            message: `Оновлення реакцій за ${isoToday()}`,
-            content: content,
-            sha: sha || undefined
-          })
-        });
-
-        return response.ok;
-      } catch (error) {
-        console.error('Помилка збереження реакцій:', error);
-        return false;
-      }
+      // Зберігаємо в localStorage
+      saveReactionsToStorage();
+      return true;
     }
 
     function getUserReaction(mealType) {
@@ -390,7 +355,7 @@
       }
       
       const cityContent = document.createElement('div');
-      cityContent.innerHTML = `<h4>🍽️ Обід</h4><div>${day.city.lunch || '—'}</div>`;
+      cityContent.innerHTML = `<h4>🍽️ Обід</h4><div class="meal-content">${day.city.lunch || '—'}</div>`;
       cityLunchCard.appendChild(cityContent);
       
       if (isToday) {
@@ -421,7 +386,7 @@
         }
         
         const content = document.createElement('div');
-        content.innerHTML = `<h4>${title}</h4><div>${val || '—'}</div>`;
+        content.innerHTML = `<h4>${title}</h4><div class="meal-content">${val || '—'}</div>`;
         div.appendChild(content);
         
         if (isToday) {
@@ -443,11 +408,13 @@
       const likeBtn = document.createElement('button');
       likeBtn.className = `reaction-btn like ${userReaction === 'like' ? 'active' : ''}`;
       likeBtn.innerHTML = `👍 <span class="reaction-count">${counts.likes}</span>`;
+      likeBtn.title = "Сподобалося";
       likeBtn.onclick = () => handleReaction(mealType, 'like');
       
       const dislikeBtn = document.createElement('button');
       dislikeBtn.className = `reaction-btn dislike ${userReaction === 'dislike' ? 'active' : ''}`;
       dislikeBtn.innerHTML = `👎 <span class="reaction-count">${counts.dislikes}</span>`;
+      dislikeBtn.title = "Не сподобалося";
       dislikeBtn.onclick = () => handleReaction(mealType, 'dislike');
       
       reactionsDiv.appendChild(likeBtn);
@@ -456,15 +423,14 @@
       return reactionsDiv;
     }
 
-    async function handleReaction(mealType, reaction) {
+    function handleReaction(mealType, reaction) {
       if (dateInput.value !== isoToday()) {
         alert('⚠️ Реакції можна ставити тільки на сьогоднішнє меню!');
         return;
       }
       
-      const success = await saveReaction(mealType, reaction);
+      const success = saveReaction(mealType, reaction);
       if (success) {
-        await loadReactions();
         renderForDate(dateInput.value);
       }
     }
@@ -643,7 +609,6 @@
     document.getElementById('next').addEventListener('click', () => changeDateBy(1));
     document.getElementById('refresh').addEventListener('click', () => {
       loadData().then(() => renderForDate(dateInput.value));
-      loadReactions();
     });
 
     function changeDateBy(delta) {
@@ -726,18 +691,11 @@
       }
     });
 
-    // 👇 АВТОМАТИЧНЕ ОНОВЛЕННЯ РЕАКЦІЙ КОЖНІ 5 СЕКУНД
-    setInterval(() => {
-      if (dateInput.value === isoToday()) {
-        loadReactions().then(() => renderForDate(dateInput.value));
-      }
-    }, 5000);
-
     // 👇 ІНІЦІАЛІЗАЦІЯ
     (async function init() {
       initTheme();
       dateInput.value = isoToday();
-      await Promise.all([loadData(), loadReactions()]);
+      await loadData();
       renderForDate(dateInput.value);
     })();
   </script>
