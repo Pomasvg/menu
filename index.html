@@ -5,9 +5,36 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Шкільне меню</title>
   <style>
-    :root{--bg:#f7fbff;--card:#ffffff;--accent:#0066cc;--muted:#6b7280}
+    /* 👇 СВІТЛА ТЕМА (за замовчуванням) */
+    :root {
+      --bg: #f7fbff;
+      --card: #ffffff;
+      --accent: #0066cc;
+      --muted: #6b7280;
+      --text: #0f172a;
+      --border: rgba(11,56,110,0.04);
+      --shadow: rgba(12,18,40,0.06);
+      --reaction-bg: #f1f5f9;
+      --like-color: #22c55e;
+      --dislike-color: #ef4444;
+    }
+
+    /* 👇 ТЕМНА ТЕМА */
+    [data-theme="dark"] {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --accent: #3b82f6;
+      --muted: #94a3b8;
+      --text: #f1f5f9;
+      --border: rgba(148,163,184,0.1);
+      --shadow: rgba(0,0,0,0.3);
+      --reaction-bg: #334155;
+      --like-color: #4ade80;
+      --dislike-color: #f87171;
+    }
+
     *{box-sizing:border-box}
-    body{font-family:Inter,Segoe UI,Arial; background:var(--bg); margin:0; padding:24px; color:#0f172a}
+    body{font-family:Inter,Segoe UI,Arial; background:var(--bg); margin:0; padding:24px; color:var(--text)}
     .wrap{max-width:980px;margin:0 auto}
     header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:12px}
     h1{font-size:20px;margin:0}
@@ -16,22 +43,95 @@
     button.ghost{background:transparent;color:var(--accent);border:1px solid rgba(0,102,204,0.12)}
     button:disabled{opacity:0.6;cursor:not-allowed}
     .date-display{font-weight:700}
-    .card{background:var(--card);border-radius:10px;padding:16px;box-shadow:0 6px 18px rgba(12,18,40,0.06)}
+    .card{background:var(--card);border-radius:10px;padding:16px;box-shadow:0 6px 18px var(--shadow)}
     .section-title{font-weight:700;margin-top:14px;margin-bottom:8px}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-    .meal{padding:12px;border-radius:8px;background:#fbfdff;border:1px solid rgba(11,56,110,0.04)}
+    .meal{padding:12px;border-radius:8px;background:var(--card);border:1px solid var(--border);position:relative}
     .meal h4{margin:0 0 6px 0;font-size:15px}
     .muted{color:var(--muted);font-size:13px}
     .form-row{margin-top:8px}
-    textarea,input[type="text"]{width:100%;padding:8px;border-radius:6px;border:1px solid #e6eef8;font-size:14px}
+    textarea,input[type="text"]{width:100%;padding:8px;border-radius:6px;border:1px solid var(--border);font-size:14px;background:var(--card);color:var(--text)}
     .status{padding:4px 8px;border-radius:4px;font-size:12px;margin-left:8px}
     .success{background:#d4edda;color:#155724}
     .loading{background:#fff3cd;color:#856404}
     .error{background:#f8d7da;color:#721c24}
-    .access-panel{background:#f8f9fa;padding:15px;border-radius:8px;margin-top:15px;border:1px dashed #ccc}
+    .access-panel{background:var(--reaction-bg);padding:15px;border-radius:8px;margin-top:15px;border:1px dashed var(--border)}
     .user-badge{background:#e7f3ff;padding:4px 8px;border-radius:4px;font-size:12px;margin-left:8px}
-    .admin-section{margin-top:30px;padding-top:20px;border-top:1px solid #e6eef8}
-    @media(max-width:520px){header{flex-direction:column;align-items:flex-start}}
+
+    /* 👇 КНОПКА ТЕМИ */
+    .theme-toggle {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 20px;
+    }
+
+    /* 👇 РЕАКЦІЇ */
+    .reactions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      align-items: center;
+    }
+    
+    .reaction-btn {
+      background: var(--reaction-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+      color: var(--text);
+    }
+    
+    .reaction-btn:hover {
+      transform: scale(1.05);
+    }
+    
+    .reaction-btn.active {
+      font-weight: bold;
+    }
+    
+    .reaction-btn.like.active {
+      background: var(--like-color);
+      color: white;
+      border-color: var(--like-color);
+    }
+    
+    .reaction-btn.dislike.active {
+      background: var(--dislike-color);
+      color: white;
+      border-color: var(--dislike-color);
+    }
+    
+    .reaction-count {
+      font-size: 12px;
+      color: var(--muted);
+      margin-left: 4px;
+    }
+    
+    .today-badge {
+      position: absolute;
+      top: -8px;
+      right: 10px;
+      background: var(--accent);
+      color: white;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+
+    @media(max-width:520px){
+      header{flex-direction:column;align-items:flex-start}
+      .controls{flex-wrap:wrap}
+    }
   </style>
 </head>
 <body>
@@ -42,12 +142,13 @@
         <div class="muted small">Показано меню на <span id="readableDate">...</span> <span id="status" class="status"></span></div>
       </div>
       <div class="controls">
+        <button id="themeToggle" class="theme-toggle">🌙</button>
         <button id="prev" class="ghost">←</button>
         <input type="date" id="date" />
         <button id="next" class="ghost">→</button>
         <button id="today">Сьогодні</button>
         <button id="refresh">🔄 Оновити</button>
-        <button id="adminToggle" class="ghost">⚙️ Для адміна</button>
+        <button id="adminToggle" class="ghost">⚙️ Адмін</button>
         <span id="userBadge" class="user-badge" style="display:none">👤 Адмін</span>
       </div>
     </header>
@@ -59,7 +160,7 @@
       <div class="section-title">🏠 Іногородні діти</div>
       <div id="nonCityArea" class="grid" aria-live="polite"></div>
 
-      <div class="admin-section">
+      <div id="adminSection" style="margin-top:30px;padding-top:20px;border-top:1px solid var(--border)">
         <div style="text-align:center;margin-bottom:15px;">
           <button id="toggleAdminPanel" class="ghost" style="font-size:12px;">👨‍🏫 Розділ для адміністратора</button>
         </div>
@@ -76,7 +177,7 @@
           </div>
         </div>
 
-        <div id="editor" style="display:none;margin-top:20px;padding:20px;background:#f8f9fa;border-radius:8px;">
+        <div id="editor" style="display:none;margin-top:20px;padding:20px;background:var(--reaction-bg);border-radius:8px;">
           <h3>✏️ Редагувати меню на <span id="editDateLabel"></span></h3>
           
           <div class="muted" style="margin-bottom:15px;">
@@ -108,11 +209,24 @@
       repoOwner: "Pomasvg",       
       repoName: "menu"
     };
-    // =======================================
+
+    // 👇 ДОДАНО РЕАКЦІЇ В КОНФІГ
+    const REACTIONS_CONFIG = {
+      repoOwner: "Pomasvg",
+      repoName: "menu-reactions" // окремий файл для реакцій
+    };
 
     let currentData = {};
+    let reactionsData = {};
     let isAdmin = false;
     let githubToken = "";
+    let userId = localStorage.getItem('user_id') || generateUserId();
+
+    function generateUserId() {
+      const id = 'user_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('user_id', id);
+      return id;
+    }
 
     const dateInput = document.getElementById('date');
     const readableDate = document.getElementById('readableDate');
@@ -129,6 +243,230 @@
     function setStatus(text, type = '') {
       statusEl.textContent = text;
       statusEl.className = `status ${type}`;
+    }
+
+    // 👇 ТЕМНА/СВІТЛА ТЕМА
+    function initTheme() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      updateThemeButton(savedTheme);
+    }
+
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      updateThemeButton(newTheme);
+    }
+
+    function updateThemeButton(theme) {
+      const button = document.getElementById('themeToggle');
+      button.textContent = theme === 'dark' ? '☀️' : '🌙';
+    }
+
+    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+    // 👇 ФУНКЦІЇ ДЛЯ РЕАКЦІЙ
+    async function loadReactions() {
+      try {
+        const url = `https://raw.githubusercontent.com/${REACTIONS_CONFIG.repoOwner}/${REACTIONS_CONFIG.repoName}/main/reactions.json`;
+        const response = await fetch(url + '?t=' + Date.now());
+        
+        if (response.ok) {
+          reactionsData = await response.json();
+          return true;
+        } else {
+          reactionsData = {};
+          return true;
+        }
+      } catch (error) {
+        console.error('Помилка завантаження реакцій:', error);
+        reactionsData = {};
+        return false;
+      }
+    }
+
+    async function saveReaction(mealType, reaction) {
+      const today = isoToday();
+      if (!reactionsData[today]) {
+        reactionsData[today] = {};
+      }
+      
+      if (!reactionsData[today][mealType]) {
+        reactionsData[today][mealType] = { likes: [], dislikes: [] };
+      }
+      
+      // Видаляємо стару реакцію користувача
+      const mealReactions = reactionsData[today][mealType];
+      mealReactions.likes = mealReactions.likes.filter(id => id !== userId);
+      mealReactions.dislikes = mealReactions.dislikes.filter(id => id !== userId);
+      
+      // Додаємо нову реакцію
+      if (reaction === 'like') {
+        mealReactions.likes.push(userId);
+      } else if (reaction === 'dislike') {
+        mealReactions.dislikes.push(userId);
+      }
+      
+      // Зберігаємо в GitHub
+      return await saveReactionsToGitHub();
+    }
+
+    async function saveReactionsToGitHub() {
+      try {
+        const url = `https://api.github.com/repos/${REACTIONS_CONFIG.repoOwner}/${REACTIONS_CONFIG.repoName}/contents/reactions.json`;
+        
+        let sha = '';
+        try {
+          const getResponse = await fetch(url);
+          if (getResponse.ok) {
+            const fileData = await getResponse.json();
+            sha = fileData.sha;
+          }
+        } catch (e) {}
+        
+        const content = btoa(JSON.stringify(reactionsData, null, 2));
+        const response = await fetch(url, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: `Оновлення реакцій за ${isoToday()}`,
+            content: content,
+            sha: sha || undefined
+          })
+        });
+
+        return response.ok;
+      } catch (error) {
+        console.error('Помилка збереження реакцій:', error);
+        return false;
+      }
+    }
+
+    function getUserReaction(mealType) {
+      const today = isoToday();
+      if (!reactionsData[today] || !reactionsData[today][mealType]) {
+        return null;
+      }
+      
+      const mealReactions = reactionsData[today][mealType];
+      if (mealReactions.likes.includes(userId)) return 'like';
+      if (mealReactions.dislikes.includes(userId)) return 'dislike';
+      return null;
+    }
+
+    function getReactionCounts(mealType) {
+      const today = isoToday();
+      if (!reactionsData[today] || !reactionsData[today][mealType]) {
+        return { likes: 0, dislikes: 0 };
+      }
+      
+      const mealReactions = reactionsData[today][mealType];
+      return {
+        likes: mealReactions.likes.length,
+        dislikes: mealReactions.dislikes.length
+      };
+    }
+
+    // 👇 ОНОВЛЕНА ФУНКЦІЯ ВІДОБРАЖЕННЯ МЕНЮ З РЕАКЦІЯМИ
+    function renderForDate(iso) {
+      if (!iso) iso = dateInput.value || isoToday();
+      readableDate.textContent = niceDate(iso);
+      const day = currentData[iso] || { city: { lunch: '' }, nonCity: { breakfast:'', snack:'', lunch:'', evening:'', dinner:'' } };
+      const isToday = iso === isoToday();
+
+      cityArea.innerHTML = '';
+      const cityLunchCard = document.createElement('div');
+      cityLunchCard.className = 'meal';
+      
+      if (isToday) {
+        const todayBadge = document.createElement('span');
+        todayBadge.className = 'today-badge';
+        todayBadge.textContent = 'СЬОГОДНІ';
+        cityLunchCard.appendChild(todayBadge);
+      }
+      
+      const cityContent = document.createElement('div');
+      cityContent.innerHTML = `<h4>🍽️ Обід</h4><div>${day.city.lunch || '—'}</div>`;
+      cityLunchCard.appendChild(cityContent);
+      
+      if (isToday) {
+        const reactions = createReactionsElement('city_lunch');
+        cityLunchCard.appendChild(reactions);
+      }
+      
+      cityArea.appendChild(cityLunchCard);
+
+      nonCityArea.innerHTML = '';
+      const fields = [
+        ['🍳 Сніданок', 'nc_breakfast', day.nonCity.breakfast],
+        ['🍎 Полуденок', 'nc_snack', day.nonCity.snack],
+        ['🍲 Обід', 'nc_lunch', day.nonCity.lunch],
+        ['🥛 Підвечірок', 'nc_evening', day.nonCity.evening],
+        ['🍛 Вечеря', 'nc_dinner', day.nonCity.dinner]
+      ];
+      
+      fields.forEach(([title, mealType, val]) => {
+        const div = document.createElement('div');
+        div.className = 'meal';
+        
+        if (isToday) {
+          const todayBadge = document.createElement('span');
+          todayBadge.className = 'today-badge';
+          todayBadge.textContent = 'СЬОГОДНІ';
+          div.appendChild(todayBadge);
+        }
+        
+        const content = document.createElement('div');
+        content.innerHTML = `<h4>${title}</h4><div>${val || '—'}</div>`;
+        div.appendChild(content);
+        
+        if (isToday) {
+          const reactions = createReactionsElement(mealType);
+          div.appendChild(reactions);
+        }
+        
+        nonCityArea.appendChild(div);
+      });
+    }
+
+    function createReactionsElement(mealType) {
+      const userReaction = getUserReaction(mealType);
+      const counts = getReactionCounts(mealType);
+      
+      const reactionsDiv = document.createElement('div');
+      reactionsDiv.className = 'reactions';
+      
+      const likeBtn = document.createElement('button');
+      likeBtn.className = `reaction-btn like ${userReaction === 'like' ? 'active' : ''}`;
+      likeBtn.innerHTML = `👍 <span class="reaction-count">${counts.likes}</span>`;
+      likeBtn.onclick = () => handleReaction(mealType, 'like');
+      
+      const dislikeBtn = document.createElement('button');
+      dislikeBtn.className = `reaction-btn dislike ${userReaction === 'dislike' ? 'active' : ''}`;
+      dislikeBtn.innerHTML = `👎 <span class="reaction-count">${counts.dislikes}</span>`;
+      dislikeBtn.onclick = () => handleReaction(mealType, 'dislike');
+      
+      reactionsDiv.appendChild(likeBtn);
+      reactionsDiv.appendChild(dislikeBtn);
+      
+      return reactionsDiv;
+    }
+
+    async function handleReaction(mealType, reaction) {
+      if (dateInput.value !== isoToday()) {
+        alert('⚠️ Реакції можна ставити тільки на сьогоднішнє меню!');
+        return;
+      }
+      
+      const success = await saveReaction(mealType, reaction);
+      if (success) {
+        await loadReactions();
+        renderForDate(dateInput.value);
+      }
     }
 
     function utf8_to_b64(str) {
@@ -296,34 +634,6 @@
       }
     }
 
-    function renderForDate(iso) {
-      if (!iso) iso = dateInput.value || isoToday();
-      readableDate.textContent = niceDate(iso);
-      const day = currentData[iso] || { city: { lunch: '' }, nonCity: { breakfast:'', snack:'', lunch:'', evening:'', dinner:'' } };
-
-      cityArea.innerHTML = '';
-      const cityLunchCard = document.createElement('div');
-      cityLunchCard.className = 'meal';
-      cityLunchCard.innerHTML = `<h4>🍽️ Обід</h4><div>${day.city.lunch || '—'}</div>`;
-      cityArea.appendChild(cityLunchCard);
-
-      nonCityArea.innerHTML = '';
-      const fields = [
-        ['🍳 Сніданок', day.nonCity.breakfast],
-        ['🍎 Полуденок', day.nonCity.snack],
-        ['🍲 Обід', day.nonCity.lunch],
-        ['🥛 Підвечірок', day.nonCity.evening],
-        ['🍛 Вечеря', day.nonCity.dinner]
-      ];
-      
-      fields.forEach(([title, val]) => {
-        const div = document.createElement('div');
-        div.className = 'meal';
-        div.innerHTML = `<h4>${title}</h4><div>${val || '—'}</div>`;
-        nonCityArea.appendChild(div);
-      });
-    }
-
     document.getElementById('today').addEventListener('click', () => {
       dateInput.value = isoToday();
       renderForDate(dateInput.value);
@@ -331,7 +641,10 @@
 
     document.getElementById('prev').addEventListener('click', () => changeDateBy(-1));
     document.getElementById('next').addEventListener('click', () => changeDateBy(1));
-    document.getElementById('refresh').addEventListener('click', () => loadData().then(() => renderForDate(dateInput.value)));
+    document.getElementById('refresh').addEventListener('click', () => {
+      loadData().then(() => renderForDate(dateInput.value));
+      loadReactions();
+    });
 
     function changeDateBy(delta) {
       const cur = new Date(dateInput.value || isoToday());
@@ -348,7 +661,7 @@
     });
 
     document.getElementById('adminToggle').addEventListener('click', () => {
-      document.querySelector('.admin-section').scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('adminSection').scrollIntoView({ behavior: 'smooth' });
       accessPanel.style.display = 'block';
     });
 
@@ -367,7 +680,7 @@
 
     document.getElementById('adminToggle').addEventListener('click', () => {
       if (!isAdmin) {
-        document.querySelector('.admin-section').scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('adminSection').scrollIntoView({ behavior: 'smooth' });
         accessPanel.style.display = 'block';
         return;
       }
@@ -413,13 +726,18 @@
       }
     });
 
+    // 👇 АВТОМАТИЧНЕ ОНОВЛЕННЯ РЕАКЦІЙ КОЖНІ 5 СЕКУНД
     setInterval(() => {
-      loadData().then(() => renderForDate(dateInput.value));
-    }, 60000);
+      if (dateInput.value === isoToday()) {
+        loadReactions().then(() => renderForDate(dateInput.value));
+      }
+    }, 5000);
 
+    // 👇 ІНІЦІАЛІЗАЦІЯ
     (async function init() {
+      initTheme();
       dateInput.value = isoToday();
-      await loadData();
+      await Promise.all([loadData(), loadReactions()]);
       renderForDate(dateInput.value);
     })();
   </script>
