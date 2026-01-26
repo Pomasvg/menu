@@ -70,5 +70,17 @@
       "evening": "",
       "dinner": ""
     }
+  },
+  "2026-01-26": {
+    "city": {
+      "lunch": "8/10"
+    },
+    "nonCity": {
+      "breakfast": "",
+      "snack": "",
+      "lunch": "",
+      "evening": "",
+      "dinner": ""
+    }
   }
 }
